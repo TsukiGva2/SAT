@@ -153,23 +153,23 @@ whites -->
 operator(lparen) -->
 	[C],
     { code_type(C, paren(_))
-    }, !.
+    }.
 operator(rparen) -->
 	[C],
     { code_type(_, paren(C))
-    }, !.
+    }.
 operator(not) -->
     [C],
     { char_code('~', C)
-    }, !.
+    }.
 operator(and) -->
     [C],
     { char_code('&', C)
-    }, !.
+    }.
 operator(or) -->
     [C],
     { char_code('|', C)
-    }, !.
+    }.
 operator(implies) -->
     [C,C1],
     { char_code('-', C),
