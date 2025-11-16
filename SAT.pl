@@ -6,36 +6,41 @@
 % 2025 -- Rodrigo Monteiro Junior
 % SAT.pl
 
-sat(WFF, Vars) :-
-    cnf(WFF, CNF),
-    sat_(CNF, Vars).
-
-sat_(CNF, Vars) :-
-    eval(CNF, _{}, Vars, true).
-
-% evaluator
-
-eval(name(X), VarsIn, VarsOut, true)  :- VarsOut = VarsIn.put([X=true]), !.
-eval(name(X), VarsIn, VarsOut, false) :- VarsOut = VarsIn.put([X=false]).
-
-eval(not(P), VarsIn, VarsOut, false) :-
-    eval(P, VarsIn, VarsOut, true), !.
-eval(not(P), VarsIn, VarsOut, true) :-
-    eval(P, VarsIn, VarsOut, false).
-
-eval(or(P, _), VarsIn, VarsOut, true) :- eval(P, VarsIn, VarsOut, true).
-eval(or(_, Q), VarsIn, VarsOut, true) :- eval(Q, VarsIn, VarsOut, true).
-
-eval(and(P, Q), VarsIn, VarsOut, true) :-
-    eval(P, VarsIn, VarsMid, true),
-    eval(Q, VarsMid, VarsOut, true).
-
 % -------------------------
 
-cnf(WFF, CNF) :-
+sat(WFF, Result) :-
     nif(WFF, NIF),
     nnf(NIF, NNF),
-    cnf_(NNF, CNF).
+    cnf(NNF, CNF),
+    
+    flatten_and(CNF, AndFlattened),
+    maplist(flatten_or, AndFlattened, PreparedCNF),
+    dpll(PreparedCNF).
+
+% first pass: identify units
+unit_propagation_1([[not(X)]|Xs], True, False, Result) :-
+    !,
+    unit_propagation_1(Xs, True, [X|False], Result).
+unit_propagation_1([[X]|Xs], True, False, Result) :-
+    unit_propagation(Xs, [X|True], False, Result).
+
+flatten_or(or(P, Q), L) :-
+    !,
+    flatten_or(P, Pf),
+    flatten_or(Q, Qf),
+    append(Pf, Qf, L).
+flatten_or(name(P), [P]) :-
+    !.
+flatten_or(not(name(P)), [not(P)]) :-
+    !.
+flatten_or(P, [P]).
+
+flatten_and(and(P, Q), L) :-
+    !,
+    flatten_and(P, Pf),
+    flatten_and(Q, Qf),
+    append(Pf, Qf, L).
+flatten_and(P, [P]).
 
 % Normalized inference form
 
@@ -90,27 +95,32 @@ nnf(or(P, Q), or(P_, Q_)) :-
 
 % conjunction normal form
 
-cnf_(name(P), name(P)).
-cnf_(bool(T), bool(T)).
-cnf_(not(P), not(P)).
+cnf(name(P), name(P)).
+cnf(bool(T), bool(T)).
+cnf(not(P), not(P)).
 
-cnf_(or(C, and(P, Q)), and(or(P_, C_), or(Q_, C_))) :-
+cnf(or(or(P, Q), C), Result) :-
+    !,
+    cnf(or(P, Q), Inner),
+    cnf(or(Inner, C), Result).
+
+cnf(or(C, and(P, Q)), and(or(P_, C_), or(Q_, C_))) :-
     !,
     cnf(P, P_),
     cnf(Q, Q_),
     cnf(C, C_).
 
-cnf_(or(and(P, Q), C), and(or(P_, C_), or(Q_, C_))) :-
+cnf(or(and(P, Q), C), and(or(P_, C_), or(Q_, C_))) :-
     !,
     cnf(P, P_),
     cnf(Q, Q_),
     cnf(C, C_).
 
-cnf_(or(P, Q), or(P_, Q_)) :-
+cnf(or(P, Q), or(P_, Q_)) :-
     cnf(P, P_),
     cnf(Q, Q_).
 
-cnf_(and(P, Q), and(P_, Q_)) :-
+cnf(and(P, Q), and(P_, Q_)) :-
     cnf(P, P_),
     cnf(Q, Q_).
 
@@ -153,23 +163,23 @@ whites -->
 operator(lparen) -->
 	[C],
     { code_type(C, paren(_))
-    }.
+    }, !.
 operator(rparen) -->
 	[C],
     { code_type(_, paren(C))
-    }.
+    }, !.
 operator(not) -->
     [C],
     { char_code('~', C)
-    }.
+    }, !.
 operator(and) -->
     [C],
     { char_code('&', C)
-    }.
+    }, !.
 operator(or) -->
     [C],
     { char_code('|', C)
-    }.
+    }, !.
 operator(implies) -->
     [C,C1],
     { char_code('-', C),
@@ -225,6 +235,7 @@ factor(A) -->
 
 /** <examples>
 
-?- string_codes("p & q -> c", Expr), time(phrase(lex(Tokens), Expr)), time(phrase(parse(Ast), Tokens)).
+?- string_codes("p&q->c", Expr), time(phrase(lex(Tokens), Expr)), time(phrase(parse(Ast), Tokens)).
+?- evaluate.
 
 */
