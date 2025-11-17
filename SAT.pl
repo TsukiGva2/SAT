@@ -6,15 +6,29 @@
 % 2025 -- Rodrigo Monteiro Junior
 % SAT.pl
 
+solve :-
+    read_line_to_codes(user_input, Expr),
+    phrase(lex(Tokens), Expr),
+    phrase(parse(AST), Tokens),
+    findall(SAT, sat(AST, SAT), Solutions),
+    format('solution: ~w~n', [Solutions]).
+
+solve(Str) :-
+    string_codes(Str, Expr),
+    phrase(lex(Tokens), Expr),
+    phrase(parse(AST), Tokens),
+    findall(SAT, sat(AST, SAT), Solutions),
+    format('solution: ~w~n', [Solutions]).
+
 % -------------------------
 
-sat(WFF, _Result) :-
+sat(WFF, SAT) :-
     nif(WFF, NIF),
     nnf(NIF, NNF),
     cnf(NNF, CNF),
-    
     bake(CNF, B),
-    vars(B, [], _SYM).
+    vars(B, [], SYM),
+    dpll(B, [], SAT, SYM).
 
 % SAT
 % -SAT is the set of attributions to the vars
@@ -54,7 +68,7 @@ assign_true([Clause|Clauses], Sym, NewClauses, Assigned) :-
 
 assign_true([Clause|Clauses], Sym, NewClauses, Assigned) :-
     include({Sym}/[P]>>(P\=not(Sym)), Clause, NoSym),
-    assign_false(Clauses, Sym, [NoSym|NewClauses], Assigned).
+    assign_true(Clauses, Sym, [NoSym|NewClauses], Assigned).
 
 assign_true([], _, NewClauses, NewClauses).
 % -----------------------------------------------------------
@@ -291,25 +305,36 @@ factor(A) -->
 
 /** <examples>
 
-?- string_codes("p&q->c", Expr), time(phrase(lex(Tokens), Expr)), time(phrase(parse(Ast), Tokens)).
-?- evaluate.
+% SAT, 199,256 inferences, 0.036 CPU in 0.036 seconds (100% CPU, 5469715 Lips)
+?- time(solve("(
+    ((a -> (b & c)) & ((b & c) -> a)) &
+    ((d -> (e & f)) & ((e & f) -> d)) &
+    ((g -> (h & i)) & ((h & i) -> g)) &
+    ((j -> (k & l)) & ((k & l) -> j)) &
+    ((m -> (a | d)) & ((a | d) -> m)) &
+    ((n -> (g | j)) & ((g | j) -> n)) &
+    ((o -> ((m -> n) & (n -> m))) &
+     (((m -> n) & (n -> m)) -> o))
+   )
+   ")).
 
-?- string_codes("p&q->c", _Expr), time(phrase(lex(_Tokens), _Expr)), time(phrase(parse(Ast), _Tokens)),
-sat(Ast, Vars).
+% UNSAT, 7,581 inferences, 0.002 CPU in 0.002 seconds (100% CPU, 3753479 Lips)
+?- time(solve("(
+    (a | b) & (c | d) & (e | f)
+    &
+    (~(a & b)) & (~(c & d)) & (~(e & f))
+    &
+    (~a | ~c) & (~a | ~e) & (~c | ~e)
+    &
+    (~b | ~d) & (~b | ~f) & (~d | ~f)
+   )")).
 
-?- string_codes("p&q|v&k", _Expr), time(phrase(lex(_Tokens), _Expr)), time(phrase(parse(Ast), _Tokens)),
-nif(Ast, NIF),
-nnf(NIF, NNF),
-cnf(NNF, CNF),
-bake(CNF, B),
-vars(B, SYM).
+% UNSAT, 2,309 inferences, 0.001 CPU in 0.001 seconds (101% CPU, 3568531 Lips)
+?- time(solve("(a -> b) & (b -> c) & (c -> ~a) & a")).
 
-?- string_codes("p&q|v&k", _Expr), time(phrase(lex(_Tokens), _Expr)), time(phrase(parse(Ast), _Tokens)),
-nif(Ast, NIF),
-nnf(NIF, NNF),
-cnf(NNF, CNF),
-bake(CNF, B),
-vars(B, [], _SYM),
-dpll(B, [], SAT, _SYM).
-
+% SAT, 33,706 inferences, 0.006 CPU in 0.006 seconds (100% CPU, 5686225 Lips)
+?- time(solve("(a | b | c) &
+   (d | e | f) &
+   (g | h | i) &
+   (a -> d) & (d -> g) & (g -> a)")).
 */
