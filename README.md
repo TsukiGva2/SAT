@@ -1,6 +1,10 @@
 # SAT
 A bare bones solution to the boolean satisfiability problem in prolog
 
+[Try it online!](https://swish.swi-prolog.org/p/sat_solver.pl)
+
+<img width="575" height="111" alt="image" src="https://github.com/user-attachments/assets/ea9aa2ab-8dd5-483f-ba2f-398f7953e49c" />
+
 ## Expression syntax
 
 Right now only a small subset of logical operators are defined for this proof of concept:
@@ -21,11 +25,9 @@ Right now only a small subset of logical operators are defined for this proof of
     
     other meta stuff.
 
-## Swish
+## Simple benchmarks:
 
-[Try it online!](https://swish.swi-prolog.org/p/sat_solver.pl)
-
-<img width="575" height="111" alt="image" src="https://github.com/user-attachments/assets/ea9aa2ab-8dd5-483f-ba2f-398f7953e49c" />
+![Screenshot_2025-11-17-15-58-08-844_com android chrome](https://github.com/user-attachments/assets/9644f9c0-5e6a-4369-87bb-9caca2824895)
 
 ## Command line
 
