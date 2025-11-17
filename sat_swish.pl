@@ -11,14 +11,14 @@ solve :-
     phrase(lex(Tokens), Expr),
     phrase(parse(AST), Tokens),
     findall(SAT, sat(AST, SAT), Solutions),
-    format('solution: ~w~n', [Solutions]).
+    format('solutions: ~w~n', [Solutions]).
 
 solve(Str) :-
     string_codes(Str, Expr),
     phrase(lex(Tokens), Expr),
     phrase(parse(AST), Tokens),
     findall(SAT, sat(AST, SAT), Solutions),
-    format('solution: ~w~n', [Solutions]).
+    format('solutions: ~w~n', [Solutions]).
 
 % -------------------------
 
