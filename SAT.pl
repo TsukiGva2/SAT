@@ -8,21 +8,78 @@
 
 % -------------------------
 
-sat(WFF, Result) :-
+sat(WFF, _Result) :-
     nif(WFF, NIF),
     nnf(NIF, NNF),
     cnf(NNF, CNF),
     
-    flatten_and(CNF, AndFlattened),
-    maplist(flatten_or, AndFlattened, PreparedCNF),
-    dpll(PreparedCNF).
+    bake(CNF, B),
+    vars(B, [], _SYM).
 
-% first pass: identify units
-unit_propagation_1([[not(X)]|Xs], True, False, Result) :-
+% SAT
+% -SAT is the set of attributions to the vars
+dpll([], SAT, SAT, _) :- !.
+
+% UNSAT
+dpll(Phi, _, _, _) :-
+    member([], Phi), !,
+    fail.
+
+dpll(Phi, Test, SAT, [Sym|Symbols]) :-
     !,
-    unit_propagation_1(Xs, True, [X|False], Result).
-unit_propagation_1([[X]|Xs], True, False, Result) :-
-    unit_propagation(Xs, [X|True], False, Result).
+    assign(Phi, Sym, T, Assigned),
+    dpll(Assigned, [T|Test], SAT, Symbols).
+
+assign(Phi, Sym, t(Sym), Assigned) :-
+    assign_true(Phi, Sym, [], Assigned).
+assign(Phi, Sym, f(Sym), Assigned) :-
+    assign_false(Phi, Sym, [], Assigned).
+
+% False assignment ------------------------------------------
+assign_false([Clause|Clauses], Sym, NewClauses, Assigned) :-
+    member(not(Sym), Clause), !,
+    assign_false(Clauses, Sym, NewClauses, Assigned).
+
+assign_false([Clause|Clauses], Sym, NewClauses, Assigned) :-
+    include({Sym}/[P]>>(P\=Sym), Clause, NoSym),
+    assign_false(Clauses, Sym, [NoSym|NewClauses], Assigned).
+
+assign_false([], _, NewClauses, NewClauses).
+% -----------------------------------------------------------
+
+% True assignment -------------------------------------------
+assign_true([Clause|Clauses], Sym, NewClauses, Assigned) :-
+    member(Sym, Clause), !,
+    assign_true(Clauses, Sym, NewClauses, Assigned).
+
+assign_true([Clause|Clauses], Sym, NewClauses, Assigned) :-
+    include({Sym}/[P]>>(P\=not(Sym)), Clause, NoSym),
+    assign_false(Clauses, Sym, [NoSym|NewClauses], Assigned).
+
+assign_true([], _, NewClauses, NewClauses).
+% -----------------------------------------------------------
+
+vars([Clause|Clauses], Found, SYM) :-
+    var_scan(Clause, Found, NewFound),
+    vars(Clauses, NewFound, SYM).
+vars([], Found, Found).
+
+var_scan([not(P)|Rest], Found, NewFound) :-
+    !,
+    (   member(P, Found)
+    ->  var_scan(Rest, Found, NewFound)
+    ;   var_scan(Rest, [P|Found], NewFound)
+    ).
+var_scan([P|Rest], Found, NewFound) :-
+    (   member(P, Found)
+    ->  var_scan(Rest, Found, NewFound)
+    ;   var_scan(Rest, [P|Found], NewFound)
+    ).
+var_scan([], Found, Found).
+
+bake(CNF, BCNF) :-
+    flatten_and(CNF, AndFlattened),
+    maplist(flatten_or, AndFlattened, BCNF).
 
 flatten_or(or(P, Q), L) :-
     !,
@@ -99,30 +156,24 @@ cnf(name(P), name(P)).
 cnf(bool(T), bool(T)).
 cnf(not(P), not(P)).
 
-cnf(or(or(P, Q), C), Result) :-
-    !,
-    cnf(or(P, Q), Inner),
-    cnf(or(Inner, C), Result).
-
-cnf(or(C, and(P, Q)), and(or(P_, C_), or(Q_, C_))) :-
-    !,
+cnf(or(P, Q), Result) :-
     cnf(P, P_),
     cnf(Q, Q_),
-    cnf(C, C_).
-
-cnf(or(and(P, Q), C), and(or(P_, C_), or(Q_, C_))) :-
-    !,
-    cnf(P, P_),
-    cnf(Q, Q_),
-    cnf(C, C_).
-
-cnf(or(P, Q), or(P_, Q_)) :-
-    cnf(P, P_),
-    cnf(Q, Q_).
+    distribute_or(P_, Q_, Result).
 
 cnf(and(P, Q), and(P_, Q_)) :-
     cnf(P, P_),
     cnf(Q, Q_).
+
+distribute_or(and(A, B), Q, and(R1, R2)) :-
+    !,
+    cnf(or(A, Q), R1),
+    cnf(or(B, Q), R2).
+distribute_or(Q, and(A, B), and(R1, R2)) :-
+    !,
+    cnf(or(A, Q), R1),
+    cnf(or(B, Q), R2).
+distribute_or(A, B, or(A, B)).
 
 % -------------------------
 
@@ -197,7 +248,16 @@ parse(Ast) -->
 
 expr(A) -->
     term(T0),
-    expr_r(T0, A).
+    expr_r(T0, A0),
+    implies(A0, A).
+
+implies(T0, A) -->
+    [operator(implies)], !,
+    term(T1),
+    expr_r(T1, E),
+    implies(implies(T0, E), A).
+implies(T, T) -->
+    [].
 
 expr_r(T0, A) -->
     [operator(and)], !,
@@ -207,10 +267,6 @@ expr_r(T0, A) -->
     [operator(or)], !,
     term(T1),
     expr_r(or(T0, T1), A).
-expr_r(T0, A) -->
-    [operator(implies)], !,
-    term(T1),
-    expr_r(implies(T0, T1), A).
 expr_r(T, T) -->
     [].
 
@@ -237,5 +293,23 @@ factor(A) -->
 
 ?- string_codes("p&q->c", Expr), time(phrase(lex(Tokens), Expr)), time(phrase(parse(Ast), Tokens)).
 ?- evaluate.
+
+?- string_codes("p&q->c", _Expr), time(phrase(lex(_Tokens), _Expr)), time(phrase(parse(Ast), _Tokens)),
+sat(Ast, Vars).
+
+?- string_codes("p&q|v&k", _Expr), time(phrase(lex(_Tokens), _Expr)), time(phrase(parse(Ast), _Tokens)),
+nif(Ast, NIF),
+nnf(NIF, NNF),
+cnf(NNF, CNF),
+bake(CNF, B),
+vars(B, SYM).
+
+?- string_codes("p&q|v&k", _Expr), time(phrase(lex(_Tokens), _Expr)), time(phrase(parse(Ast), _Tokens)),
+nif(Ast, NIF),
+nnf(NIF, NNF),
+cnf(NNF, CNF),
+bake(CNF, B),
+vars(B, [], _SYM),
+dpll(B, [], SAT, _SYM).
 
 */
