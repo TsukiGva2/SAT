@@ -41,7 +41,14 @@ dpll(Phi, _, _, _) :-
 
 dpll(Phi, Test, SAT, Symbols) :-
 	member(Sym, Symbols),
-    find_unit(Phi, Sym, T), !,
+    unit(Phi, Sym, T), !,
+    assign(Phi, Sym, T, Assigned),
+    select(Sym, Symbols, Chopped),
+    dpll(Assigned, [T|Test], SAT, Chopped).
+
+dpll(Phi, Test, SAT, Symbols) :-
+    member(Sym, Symbols),
+    pure_literal(Phi, Sym, T), !,
     assign(Phi, Sym, T, Assigned),
     select(Sym, Symbols, Chopped),
     dpll(Assigned, [T|Test], SAT, Chopped).
@@ -51,8 +58,13 @@ dpll(Phi, Test, SAT, [Sym|Symbols]) :-
     assign(Phi, Sym, T, Assigned),
     dpll(Assigned, [T|Test], SAT, Symbols).
 
-find_unit(Phi, Sym, t(Sym)) :- member([Sym], Phi), !.
-find_unit(Phi, Sym, f(Sym)) :- member([not(Sym)], Phi).
+pure_literal(Phi, Sym, t(Sym)) :-
+    \+ maplist(member(not(Sym)), Phi).
+pure_literal(Phi, Sym, f(Sym)) :-
+    \+ maplist(member(Sym), Phi).
+
+unit(Phi, Sym, t(Sym)) :- member([Sym], Phi).
+unit(Phi, Sym, f(Sym)) :- member([not(Sym)], Phi).
 
 assign(Phi, Sym, t(Sym), Assigned) :-
     assign_true(Phi, Sym, [], Assigned).
