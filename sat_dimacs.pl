@@ -1,20 +1,12 @@
+:- module(sat_dimacs, [solve_file/1]).
+
 % 2025 -- Rodrigo Monteiro Junior
 % sat_DIMACS.pl
 
 :- use_module(library(dcg/basics)).
 
-solve :-
-    read_line_to_codes(user_input, Expr),
-    phrase(lex([header(Vars, _)|Tokens]), Expr),
-    phrase(parse(CNF), Tokens),
-    
-    numlist(1, Vars, SYM),
-    findall(SAT, sat(CNF, SAT, SYM), Solutions),
-    format('solutions: ~w~n', [Solutions]).
-
-solve(Str) :-
-    string_codes(Str, Expr),
-    phrase(lex([header(Vars, _)|Tokens]), Expr),
+solve_file(File) :-
+    phrase_from_file(lex([header(Vars, _)|Tokens]), File),
     phrase(parse(CNF), Tokens),
     
     numlist(1, Vars, SYM),
@@ -121,6 +113,11 @@ lex([Token|Tokens]) -->
     lex(Tokens).
 
 lex([]) -->
+    ignored,
+    "%", !,
+    remainder(_).
+
+lex([]) -->
     [].
 
 ignored -->
@@ -147,10 +144,11 @@ tok(var(X)) -->
 tok(header(Vars, Clauses)) -->
     "p",           " ",
     "cnf",         " ",
-    integer(Vars), " ",
+    integer(Vars), "  ",
     integer(Clauses).
 
 up_to_nl -->
     eol, !.
 up_to_nl -->
     [_], up_to_nl.
+
