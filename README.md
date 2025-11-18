@@ -49,6 +49,9 @@ Benchmarks can be found under the "benchmarks" folder, containing the test name,
 
 The solver is currently only tested under [uf20-91 - SATLIB](https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html), it may take ages to complete in any other problemset.
 
+Update, a single test from "uuf50-218: 50 variables, 218 clauses - 1000 instances, all sat/unsat" should take roughly 79 million inferences under this
+implementation, i'll NOT be doing the whole file.
+
 more tests can be found [here](https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html)
 
 ## Running locally / Testing
