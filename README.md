@@ -1,6 +1,9 @@
 # SAT
 A bare bones solution to the boolean satisfiability problem in prolog
 
+Note: this is not a #SAT, altough sometimes it generates more than one solution (due to findall/3).
+This is intended for deugging purposes, i'll probably remove this soon (already did for sat_dimacs.pl, which runs the benchmarks)
+
 [Try it online!](https://swish.swi-prolog.org/p/sat_solver.pl)
 [Notebook version](https://swish.swi-prolog.org/p/sat_solver%20notebook.swinb)
 
