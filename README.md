@@ -4,8 +4,6 @@ A bare bones solution to the boolean satisfiability problem in prolog
 [Try it online!](https://swish.swi-prolog.org/p/sat_solver.pl)
 [Notebook version](https://swish.swi-prolog.org/p/sat_solver%20notebook.swinb)
 
-<img width="575" height="111" alt="image" src="https://github.com/user-attachments/assets/ea9aa2ab-8dd5-483f-ba2f-398f7953e49c" />
-
 ## Expression syntax
 
 Right now only a small subset of logical operators are defined for this proof of concept:

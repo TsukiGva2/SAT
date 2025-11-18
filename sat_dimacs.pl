@@ -10,8 +10,11 @@ solve_file(File) :-
     phrase(parse(CNF), Tokens),
     
     numlist(1, Vars, SYM),
-    findall(SAT, sat(CNF, SAT, SYM), Solutions),
-    format('solutions: ~w~n', [Solutions]).
+
+	(	sat(CNF, SAT, SYM)
+	->	format('SAT: ~w~n', [SAT])
+	;	format('UNSAT~n')
+	).
 
 % -------------------------
 
