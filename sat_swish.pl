@@ -59,9 +59,13 @@ dpll(Phi, Test, SAT, [Sym|Symbols]) :-
     dpll(Assigned, [T|Test], SAT, Symbols).
 
 pure_literal(Phi, Sym, t(Sym)) :-
-    \+ maplist(member(not(Sym)), Phi).
+    \+ (	member(C, Phi)
+       ,	member(not(Sym), C)
+       ).
 pure_literal(Phi, Sym, f(Sym)) :-
-    \+ maplist(member(Sym), Phi).
+    \+ (	member(C, Phi)
+       ,	member(Sym, C)
+       ).
 
 unit(Phi, Sym, t(Sym)) :- member([Sym], Phi).
 unit(Phi, Sym, f(Sym)) :- member([not(Sym)], Phi).
@@ -327,7 +331,7 @@ factor(A) -->
 
 /** <examples>
 
-% SAT, 199,256 inferences, 0.036 CPU in 0.036 seconds (100% CPU, 5469715 Lips)
+% SAT, 60,836 inferences, 0.013 CPU in 0.013 seconds (100% CPU, 4701020 Lips)
 ?- time(solve("(
     ((a -> (b & c)) & ((b & c) -> a)) &
     ((d -> (e & f)) & ((e & f) -> d)) &
@@ -340,7 +344,7 @@ factor(A) -->
    )
    ")).
 
-% UNSAT, 7,581 inferences, 0.002 CPU in 0.002 seconds (100% CPU, 3753479 Lips)
+% UNSAT, 5,420 inferences, 0.001 CPU in 0.001 seconds (102% CPU, 4683027 Lips)
 ?- time(solve("(
     (a | b) & (c | d) & (e | f)
     &
@@ -351,10 +355,10 @@ factor(A) -->
     (~b | ~d) & (~b | ~f) & (~d | ~f)
    )")).
 
-% UNSAT, 2,309 inferences, 0.001 CPU in 0.001 seconds (101% CPU, 3568531 Lips)
+% UNSAT, 1,144 inferences, 0.000 CPU in 0.000 seconds (95% CPU, 4322576 Lips)
 ?- time(solve("(a -> b) & (b -> c) & (c -> ~a) & a")).
 
-% SAT, 33,706 inferences, 0.006 CPU in 0.006 seconds (100% CPU, 5686225 Lips)
+% SAT, 3,793 inferences, 0.001 CPU in 0.001 seconds (100% CPU, 6745342 Lips)
 ?- time(solve("(a | b | c) &
    (d | e | f) &
    (g | h | i) &
