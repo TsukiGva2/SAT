@@ -28,7 +28,7 @@ Right now only a small subset of logical operators are defined for this proof of
 
 ## Simple benchmarks:
 
-![Screenshot_2025-11-17-15-58-08-844_com android chrome](https://github.com/user-attachments/assets/9644f9c0-5e6a-4369-87bb-9caca2824895)
+![Screenshot_2025-11-17-21-41-51-195_com android chrome](https://github.com/user-attachments/assets/847bfe21-65b7-4a70-a94d-fd5a294f190a)
 
 ## Command line
 
