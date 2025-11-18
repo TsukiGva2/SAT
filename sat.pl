@@ -1,4 +1,4 @@
-:- module(mySAT, [solve/0, solve/1]).
+:- module(mySAT, [solve/1, solve/0]).
 
 % 2025 -- Rodrigo Monteiro Junior
 % SAT.pl
@@ -36,10 +36,36 @@ dpll(Phi, _, _, _) :-
     member([], Phi), !,
     fail.
 
+dpll(Phi, Test, SAT, Symbols) :-
+	member(Sym, Symbols),
+    unit(Phi, Sym, T), !,
+    assign(Phi, Sym, T, Assigned),
+    select(Sym, Symbols, Chopped),
+    dpll(Assigned, [T|Test], SAT, Chopped).
+
+dpll(Phi, Test, SAT, Symbols) :-
+    member(Sym, Symbols),
+    pure_literal(Phi, Sym, T), !,
+    assign(Phi, Sym, T, Assigned),
+    select(Sym, Symbols, Chopped),
+    dpll(Assigned, [T|Test], SAT, Chopped).
+
 dpll(Phi, Test, SAT, [Sym|Symbols]) :-
     !,
     assign(Phi, Sym, T, Assigned),
     dpll(Assigned, [T|Test], SAT, Symbols).
+
+pure_literal(Phi, Sym, t(Sym)) :-
+    \+ (	member(C, Phi)
+       ,	member(not(Sym), C)
+       ).
+pure_literal(Phi, Sym, f(Sym)) :-
+    \+ (	member(C, Phi)
+       ,	member(Sym, C)
+       ).
+
+unit(Phi, Sym, t(Sym)) :- member([Sym], Phi).
+unit(Phi, Sym, f(Sym)) :- member([not(Sym)], Phi).
 
 assign(Phi, Sym, t(Sym), Assigned) :-
     assign_true(Phi, Sym, [], Assigned).
@@ -297,6 +323,3 @@ factor(A) -->
     [operator(lparen)],
     expr(A),
     [operator(rparen)].
-
-% -----------------------------------
-
