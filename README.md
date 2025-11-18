@@ -26,16 +26,35 @@ Right now only a small subset of logical operators are defined for this proof of
     
     other meta stuff.
 
-## Simple benchmarks:
+The program also supports CNF formulas in DIMACS format:
 
-![Screenshot_2025-11-17-21-41-51-195_com android chrome](https://github.com/user-attachments/assets/847bfe21-65b7-4a70-a94d-fd5a294f190a)
+    c
+    c Solve me!
+    c
+    p cnf 3  2
+    1 2 3 0
+    -3 2 0
 
-## Command line
+Though the support is still really janky, it's specifically made for handling the SATLIB tests.
 
-### Requirements: swi—prolog
+The format is described in further detail on the following pages:
+
+https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html
+https://web.archive.org/web/20190325181937/https://www.satcompetition.org/2009/format-benchmarks2009.html    
+
+## Benchmarks:
+
+Benchmarks can be found under the "benchmarks" folder, containing the test name, description and swi-prolog provided metrics.
+
+The solver is currently only tested under [uf20-91 - SATLIB](https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html), it may take ages to complete in any other problemset.
+
+more tests can be found [here](https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html)
+
+## Running locally / Testing
+
+If you have swi-prolog installed, you can clone the repository and run the tests yourself (or toy with the boolean solver)
 
     $ git clone https://github.com/TsukiGva2/SAT
     $ cd SAT
-    $ ./run.pl
-
-<img width="324" height="60" alt="image" src="https://github.com/user-attachments/assets/397fd0fd-b1bb-4658-9b79-bd82f8080856" />
+    $ ./run.pl      # The boolean expression solver
+    $ ./cnftests.pl # Run the tests (you will be prompted before running all tests)
