@@ -27,7 +27,7 @@ Right now only a small subset of logical operators are defined for this proof of
     
     other meta stuff.
 
-The program also supports CNF formulas in DIMACS format:
+The program also supports CNF formulas in DIMACS format (altough in a separate file, called sat_dimacs.pl):
 
     c
     c Solve me!
